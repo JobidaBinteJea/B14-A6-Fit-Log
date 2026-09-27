@@ -22,16 +22,29 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("default");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetch("https://api.api-store.workers.dev/api/fitlog")
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load workout data");
+        }
+
+        return response.json();
+      })
       .then((data) => {
         setWorkouts(data);
+        setError("");
         setLoading(false);
       })
       .catch((error) => {
         console.error("Failed to fetch workouts:", error);
+
+        setError(
+          "Unable to load workouts. Please try again."
+        );
+
         setLoading(false);
       });
   }, []);
@@ -80,27 +93,31 @@ export default function Home() {
           <p className="mt-2 text-gray-400">
             Twelve lifts covering every major muscle group.
           </p>
+
+          {/* SEARCH */}
           <div className="mt-6">
-  <input
-    type="text"
-    placeholder="Search workouts..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="w-full rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400 md:max-w-md"
-  />
-</div>
-<div className="mt-4">
-  <select
-    value={sortBy}
-    onChange={(e) => setSortBy(e.target.value)}
-    className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400"
-  >
-    <option value="default">Sort by</option>
-    <option value="duration">Duration</option>
-    <option value="calories">Calories</option>
-    <option value="rating">Rating</option>
-  </select>
-</div>
+            <input
+              type="text"
+              placeholder="Search workouts..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400 md:max-w-md"
+            />
+          </div>
+
+          {/* SORT */}
+          <div className="mt-4">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400"
+            >
+              <option value="default">Sort by</option>
+              <option value="duration">Duration</option>
+              <option value="calories">Calories</option>
+              <option value="rating">Rating</option>
+            </select>
+          </div>
         </div>
 
         {/* LOADING */}
@@ -112,113 +129,148 @@ export default function Home() {
           </div>
         )}
 
-        {/* WORKOUT CARDS */}
-        {!loading && workouts.length > 0 && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {workouts
-  .filter((workout) =>
-    workout.name.toLowerCase().includes(search.toLowerCase())
-  )
-  .sort((a, b) => {
-    if (sortBy === "duration") {
-      return a.duration - b.duration;
-    }
-
-    if (sortBy === "calories") {
-      return b.caloriesBurned - a.caloriesBurned;
-    }
-
-    if (sortBy === "rating") {
-      return b.rating - a.rating;
-    }
-
-    return 0;
-  })
-  .map((workout) => (
-              <Link
-                key={workout.id}
-                href={`/workout/${workout.id}`}
-                className="group block overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition hover:-translate-y-1 hover:border-lime-400"
-              >
-                {/* IMAGE */}
-                <div className="overflow-hidden">
-                  <img
-                    src={workout.image}
-                    alt={workout.name}
-                    className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                </div>
-
-                {/* CARD CONTENT */}
-                <div className="p-5">
-                  {/* MUSCLE TAGS */}
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {workout.muscleGroups.map((muscle) => (
-                      <span
-                        key={muscle}
-                        className="rounded-full bg-lime-400 px-3 py-1 text-xs font-bold text-black"
-                      >
-                        {muscle}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* NAME */}
-                  <h3 className="text-xl font-bold uppercase">
-                    {workout.name}
-                  </h3>
-
-                  {/* EQUIPMENT */}
-                  <p className="mt-2 text-sm text-gray-400">
-                    Equipment: {workout.equipment}
-                  </p>
-
-                  {/* DIFFICULTY */}
-                  <p className="mt-1 text-sm text-gray-400">
-                    Difficulty: {workout.difficulty}
-                  </p>
-
-                  {/* STATS */}
-                  <div className="mt-5 grid grid-cols-3 gap-2 border-t border-gray-800 pt-4 text-center text-sm">
-                    <div>
-                      <p className="font-bold text-white">
-                        {workout.duration}
-                      </p>
-                      <p className="text-xs text-gray-500">MIN</p>
-                    </div>
-
-                    <div>
-                      <p className="font-bold text-white">
-                        {workout.caloriesBurned}
-                      </p>
-                      <p className="text-xs text-gray-500">KCAL</p>
-                    </div>
-
-                    <div>
-                      <p className="font-bold text-lime-400">
-                        ★ {workout.rating}
-                      </p>
-                      <p className="text-xs text-gray-500">RATING</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* EMPTY STATE */}
-        {!loading && workouts.length === 0 && (
-          <div className="rounded-xl border border-red-900 bg-red-950/30 p-10 text-center">
+        {/* ERROR */}
+        {!loading && error && (
+          <div className="mt-10 rounded-xl border border-red-800 bg-red-950/30 p-8 text-center">
             <h3 className="text-xl font-bold text-red-400">
-              No workouts found
+              Something went wrong
             </h3>
 
             <p className="mt-2 text-gray-400">
-              We could not load the workout data. Please try again later.
+              {error}
             </p>
+
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-5 rounded-lg bg-lime-400 px-5 py-2 font-bold text-black"
+            >
+              TRY AGAIN
+            </button>
           </div>
         )}
+
+        {/* WORKOUT CARDS */}
+        {!loading && !error && workouts.length > 0 && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {workouts
+              .filter((workout) =>
+                workout.name
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
+              .sort((a, b) => {
+                if (sortBy === "duration") {
+                  return a.duration - b.duration;
+                }
+
+                if (sortBy === "calories") {
+                  return b.caloriesBurned - a.caloriesBurned;
+                }
+
+                if (sortBy === "rating") {
+                  return b.rating - a.rating;
+                }
+
+                return 0;
+              })
+              .map((workout) => (
+                <Link
+                  key={workout.id}
+                  href={`/workout/${workout.id}`}
+                  className="group block overflow-hidden rounded-xl border border-gray-800 bg-gray-950 transition hover:-translate-y-1 hover:border-lime-400"
+                >
+                  {/* IMAGE */}
+                  <div className="overflow-hidden">
+                    <img
+                      src={workout.image}
+                      alt={workout.name}
+                      className="h-56 w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+
+                  {/* CARD CONTENT */}
+                  <div className="p-5">
+                    {/* MUSCLE TAGS */}
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {workout.muscleGroups.map((muscle) => (
+                        <span
+                          key={muscle}
+                          className="rounded-full bg-lime-400 px-3 py-1 text-xs font-bold text-black"
+                        >
+                          {muscle}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* NAME */}
+                    <h3 className="text-xl font-bold uppercase">
+                      {workout.name}
+                    </h3>
+
+                    {/* EQUIPMENT */}
+                    <p className="mt-2 text-sm text-gray-400">
+                      Equipment: {workout.equipment}
+                    </p>
+
+                    {/* DIFFICULTY */}
+                    <p className="mt-1 text-sm text-gray-400">
+                      Difficulty: {workout.difficulty}
+                    </p>
+
+                    {/* STATS */}
+                    <div className="mt-5 grid grid-cols-3 gap-2 border-t border-gray-800 pt-4 text-center text-sm">
+                      <div>
+                        <p className="font-bold text-white">
+                          {workout.duration}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          MIN
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-white">
+                          {workout.caloriesBurned}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          KCAL
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="font-bold text-lime-400">
+                          ★ {workout.rating}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          RATING
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+          </div>
+        )}
+
+        {/* SEARCH EMPTY STATE */}
+        {!loading &&
+          !error &&
+          workouts.length > 0 &&
+          workouts.filter((workout) =>
+            workout.name
+              .toLowerCase()
+              .includes(search.toLowerCase())
+          ).length === 0 && (
+            <div className="rounded-xl border border-gray-800 bg-gray-950 p-10 text-center">
+              <h3 className="text-xl font-bold">
+                No workouts found
+              </h3>
+
+              <p className="mt-2 text-gray-400">
+                Try searching with another workout name.
+              </p>
+            </div>
+          )}
       </section>
     </main>
   );
