@@ -152,13 +152,11 @@ export default function Home() {
         {/* WORKOUT CARDS */}
         {!loading && !error && workouts.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {workouts
-              .filter((workout) =>
-                workout.name
-                  .toLowerCase()
-                  .includes(search.toLowerCase())
-              )
-              .sort((a, b) => {
+            {[...workouts]
+  .filter((workout) =>
+    workout.title.toLowerCase().includes(search.toLowerCase())
+  )
+  .sort((a, b) => {
                 if (sortBy === "duration") {
                   return a.duration - b.duration;
                 }
