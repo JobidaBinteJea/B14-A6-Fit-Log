@@ -21,6 +21,7 @@ export default function Home() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("default");
 
   useEffect(() => {
     fetch("https://api.api-store.workers.dev/api/fitlog")
@@ -88,6 +89,18 @@ export default function Home() {
     className="w-full rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400 md:max-w-md"
   />
 </div>
+<div className="mt-4">
+  <select
+    value={sortBy}
+    onChange={(e) => setSortBy(e.target.value)}
+    className="rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400"
+  >
+    <option value="default">Sort by</option>
+    <option value="duration">Duration</option>
+    <option value="calories">Calories</option>
+    <option value="rating">Rating</option>
+  </select>
+</div>
         </div>
 
         {/* LOADING */}
@@ -106,6 +119,21 @@ export default function Home() {
   .filter((workout) =>
     workout.name.toLowerCase().includes(search.toLowerCase())
   )
+  .sort((a, b) => {
+    if (sortBy === "duration") {
+      return a.duration - b.duration;
+    }
+
+    if (sortBy === "calories") {
+      return b.caloriesBurned - a.caloriesBurned;
+    }
+
+    if (sortBy === "rating") {
+      return b.rating - a.rating;
+    }
+
+    return 0;
+  })
   .map((workout) => (
               <Link
                 key={workout.id}
