@@ -20,6 +20,7 @@ type Workout = {
 export default function Home() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("https://api.api-store.workers.dev/api/fitlog")
@@ -78,6 +79,15 @@ export default function Home() {
           <p className="mt-2 text-gray-400">
             Twelve lifts covering every major muscle group.
           </p>
+          <div className="mt-6">
+  <input
+    type="text"
+    placeholder="Search workouts..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full rounded-lg border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-lime-400 md:max-w-md"
+  />
+</div>
         </div>
 
         {/* LOADING */}
@@ -92,7 +102,11 @@ export default function Home() {
         {/* WORKOUT CARDS */}
         {!loading && workouts.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {workouts.map((workout) => (
+            {workouts
+  .filter((workout) =>
+    workout.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .map((workout) => (
               <Link
                 key={workout.id}
                 href={`/workout/${workout.id}`}
